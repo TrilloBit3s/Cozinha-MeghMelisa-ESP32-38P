@@ -1,7 +1,41 @@
 // Trillobit3s@gmail.com
-// Projeto: Controle de motor de passo + FAN + LÂMPADA com Bluetooth
-// Motor: 28BYJ-48 + ULN2003
+// Controle Bluetooth ESP32 - Motor + Ventilador + Lâmpada
+// App Inventor (BOTÃO e VOZ)
 // ESP32 38 PINOS - DOIT ESP32 DEVKIT V1
+// Motor 28BYJ-48 + ULN2003
+// Relés ATIVOS EM LOW
+
+/*
+COMANDOS RECEBIDOS PELO BLUETOOTH (APP / VOZ)
+
+“ligar o motor”         -> M
+“desligar o motor”      -> m
+
+“ligar o ventilador”    -> V
+“desligar o ventilador” -> v
+
+“ligar a lâmpada”       -> L
+“desligar a lâmpada”    -> l
+
+“ligar tudo”            -> F
+“desligar tudo”         -> f
+*/
+
+// ---------------- PINOS USADOS ----------------
+// Motor de passo (ULN2003)
+// IN1 -> GPIO 16
+// IN2 -> GPIO 18
+// IN3 -> GPIO 17
+// IN4 -> GPIO 19
+
+// Relés (ativo LOW)
+// FAN     -> GPIO 25
+// LÂMPADA -> GPIO 26
+
+// ---------------- PINOS LIVRES ----------------
+// Gerais: 4, 5, 13, 14, 21, 22, 23, 27, 32, 33
+// Botões (INPUT ONLY): 34, 35, 36, 39
+// LEDs recomendados: 21, 22, 23, 27
 
 #include <Stepper.h>
 #include "BluetoothSerial.h"
@@ -11,93 +45,100 @@ BluetoothSerial SerialBT;
 // ---------------- CONFIGURAÇÕES ----------------
 #define PASSOS_POR_VOLTA 2048
 
-// Botões
-#define BOTAO_LIGA 32
-#define BOTAO_PARA 33
-
 // Relés
 #define RELE_FAN     25
 #define RELE_LAMPADA 26
 
-// Motor (ordem correta ULN2003)
-Stepper MotorStepper(PASSOS_POR_VOLTA, 16, 18, 17, 19);
+// Motor de passo (ordem correta ULN2003)
+Stepper motor(PASSOS_POR_VOLTA, 16, 18, 17, 19);
 
 // Estados
 bool motorLigado   = false;
-bool fanLigada     = false;
+bool fanLigado     = false;
 bool lampadaLigada = false;
 
 // ------------------------------------------------
 void setup() {
-  pinMode(BOTAO_LIGA, INPUT_PULLUP);
-  pinMode(BOTAO_PARA, INPUT_PULLUP);
 
   pinMode(RELE_FAN, OUTPUT);
   pinMode(RELE_LAMPADA, OUTPUT);
 
-  digitalWrite(RELE_FAN, LOW);
-  digitalWrite(RELE_LAMPADA, LOW);
+  // Tudo desligado (relé ativo LOW)
+  digitalWrite(RELE_FAN, HIGH);
+  digitalWrite(RELE_LAMPADA, HIGH);
 
-  MotorStepper.setSpeed(10);   // RPM seguro
+  motor.setSpeed(10); // RPM seguro
 
   Serial.begin(115200);
-  SerialBT.begin("ESP32_Motor");
+  SerialBT.begin("ESP32_Control");
 
   Serial.println("Bluetooth pronto");
-  Serial.println("L=Motor ON | D=Motor OFF | V=FAN | A=LAMPADA");
+  Serial.println("A Lamp ON | B Lamp OFF | C Fan ON | D Fan OFF");
+  Serial.println("E Motor ON | F Motor OFF | G Tudo ON | H Tudo OFF");
 }
 
+// ------------------------------------------------
 void loop() {
-
-  // -------- BOTÕES --------
-  if (digitalRead(BOTAO_LIGA) == LOW) {
-    motorLigado = true;
-    Serial.println("Motor LIGADO (botão)");
-    delay(200);
-  }
-
-  if (digitalRead(BOTAO_PARA) == LOW) {
-    motorLigado = false;
-    Serial.println("Motor DESLIGADO (botão)");
-    delay(200);
-  }
 
   // -------- BLUETOOTH --------
   if (SerialBT.available()) {
-    char comando = SerialBT.read();
 
-    switch (comando) {
+    char cmd = SerialBT.read();   // LÊ APENAS 1 CARACTERE
 
-      case 'L':
-      case 'l':
+    Serial.print("Recebido: ");
+    Serial.println(cmd);
+
+    switch (cmd) {
+
+      case 'N': // Lâmpada ON
+        lampadaLigada = true;
+        digitalWrite(RELE_LAMPADA, LOW);
+        break;
+
+      case 'O': // Lâmpada OFF
+        lampadaLigada = false;
+        digitalWrite(RELE_LAMPADA, HIGH);
+        break;
+
+      case 'Q': // Ventilador ON
+        fanLigado = true;
+        digitalWrite(RELE_FAN, LOW);
+        break;
+
+      case 'P': // Ventilador OFF
+        fanLigado = false;
+        digitalWrite(RELE_FAN, HIGH);
+        break;
+
+      case 'R': // Motor ON
         motorLigado = true;
-        SerialBT.println("Motor LIGADO");
         break;
 
-      case 'D':
-      case 'd':
+      case 'S': // Motor OFF
         motorLigado = false;
-        SerialBT.println("Motor DESLIGADO");
         break;
 
-      case 'V':
-      case 'v':
-        fanLigada = !fanLigada;
-        digitalWrite(RELE_FAN, fanLigada ? HIGH : LOW);
-        SerialBT.println(fanLigada ? "FAN LIGADA" : "FAN DESLIGADA");
+      case 'G': // Tudo ON
+        lampadaLigada = true;
+        fanLigado = true;
+        motorLigado = true;
+        digitalWrite(RELE_LAMPADA, LOW);
+        digitalWrite(RELE_FAN, LOW);
         break;
 
-      case 'A':
-      case 'a':
-        lampadaLigada = !lampadaLigada;
-        digitalWrite(RELE_LAMPADA, lampadaLigada ? HIGH : LOW);
-        SerialBT.println(lampadaLigada ? "LAMPADA LIGADA" : "LAMPADA DESLIGADA");
+      case 'H': // Tudo OFF
+        lampadaLigada = false;
+        fanLigado = false;
+        motorLigado = false;
+        digitalWrite(RELE_LAMPADA, HIGH);
+        digitalWrite(RELE_FAN, HIGH);
         break;
     }
   }
 
   // -------- MOTOR --------
   if (motorLigado) {
-    MotorStepper.step(1);
+    motor.step(1);   // gira sem travar Bluetooth
   }
 }
+
