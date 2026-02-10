@@ -1,7 +1,42 @@
 // Trillobit3s@gmail.com
 // Controle Bluetooth ESP32 - Motor + Ventilador + Lâmpada
+// Cozinha IOT Megh Melisa
 // ESP32 38 PINOS - DOIT ESP32 DEVKIT V1
 // Motor 28BYJ-48 + ULN2003
+// 10/02/2026
+
+// -------- APENAS VOZ ------------------
+// 1  desligar a lâmpada       = b
+// 2  ligar a lâmpada          = a
+// 3  desligar o ventilador    = d
+// 4  ligar o ventilador       = c
+// 5  desligar os equipamentos = e
+// 6  ligar os equipamentos    = f
+// 7  desligar fogo 1          = g
+// 8  ligar fogo 1             = h
+// 9  desligar fogo 2          = i
+// 10 ligar fogo 2             = j
+// 11 desligar fogo 3          = k
+// 12 ligar fogo 3             = l
+// 13 desligar fogo 4          = m
+// 14 ligar fogo 4             = n
+// 15 ligar o micro-ondas      = 3
+// 16 desligar o micro-ondas   = 2
+
+// -------- APENAS BOTÕES ----------------
+// 15 botão lâmpada desligada        = o
+// 16 botão lâmpada ligada           = p
+// 17 botão ventilador desligado     = r
+// 18 botão ventilador ligado        = q
+// 19 botão micro-ondas desligado    = s
+// 20 botão fogo 1 desligado         = u
+// 21 botão fogo 1 ligado            = v
+// 22 botão fogo 2 desligado         = w
+// 23 botão fogo 2 ligado            = x
+// 24 botão fogo 3 desligado         = y
+// 25 botão fogo 3 ligado            = z
+// 26 botão fogo 4 desligado         = 0
+// 27 botão fogo 4 ligado            = 1
 
 #include <Stepper.h>
 #include "BluetoothSerial.h"
@@ -36,14 +71,15 @@ void setup() {
   pinMode(RELE_FOGO3, OUTPUT);
   pinMode(RELE_FOGO4, OUTPUT);
 
+  // LEDs do fogo iniciam DESLIGADOS
+  digitalWrite(RELE_FOGO1, LOW);
+  digitalWrite(RELE_FOGO2, LOW);
+  digitalWrite(RELE_FOGO3, LOW);
+  digitalWrite(RELE_FOGO4, LOW);
+
   digitalWrite(RELE_FAN, HIGH);
   digitalWrite(RELE_LAMPADA, HIGH);
-
-  digitalWrite(RELE_FOGO1, HIGH);
-  digitalWrite(RELE_FOGO2, HIGH);
-  digitalWrite(RELE_FOGO3, HIGH);
-  digitalWrite(RELE_FOGO4, HIGH);
-
+  
   motor.setSpeed(10);
 
   Serial.begin(115200);
@@ -73,56 +109,6 @@ void loop() {
 
     char cmd = 0;
 
-    // // ===== VOZ =====
-    // if (recebido == "ligar a lâmpada") cmd = 'a';
-    // else if (recebido == "desligar a lâmpada") cmd = 'b';
-
-    // else if (recebido == "ligar o ventilador") cmd = 'c';
-    // else if (recebido == "desligar o ventilador") cmd = 'd';
-
-    // else if (recebido == "ligar o micro-ondas") cmd = 'f';
-    // else if (recebido == "desligar o micro-ondas") cmd = 'e';
-
-    // else if (recebido == "ligar os equipamentos") cmd = 'h';
-    // else if (recebido == "desligar os equipamentos") cmd = 'g';
-
-    // else if (recebido == "ligar fogo 1") cmd = 'j';
-    // else if (recebido == "desligar fogo 1") cmd = 'i';
-
-    // else if (recebido == "ligar fogo 2") cmd = 'l';
-    // else if (recebido == "desligar fogo 2") cmd = 'k';
-
-    // else if (recebido == "ligar fogo 3") cmd = 'n';
-    // else if (recebido == "desligar fogo 3") cmd = 'm';
-
-    // else if (recebido == "ligar fogo 4") cmd = 'p';
-    // else if (recebido == "desligar fogo 4") cmd = 'o';
-
-    // ===== VOZ (ROBUSTA - SEM ACENTO) =====
-    if (recebido.indexOf("ligar") >= 0 && recebido.indexOf("lampada") >= 0) cmd = 'a';
-    else if (recebido.indexOf("desligar") >= 0 && recebido.indexOf("lampada") >= 0) cmd = 'b';
-
-    else if (recebido.indexOf("ligar") >= 0 && recebido.indexOf("ventilador") >= 0) cmd = 'c';
-    else if (recebido.indexOf("desligar") >= 0 && recebido.indexOf("ventilador") >= 0) cmd = 'd';
-
-    else if (recebido.indexOf("ligar") >= 0 && recebido.indexOf("micro") >= 0) cmd = 'f';
-    else if (recebido.indexOf("desligar") >= 0 && recebido.indexOf("micro") >= 0) cmd = 'e';
-
-    else if (recebido.indexOf("ligar") >= 0 && recebido.indexOf("equipamentos") >= 0) cmd = 'h';
-    else if (recebido.indexOf("desligar") >= 0 && recebido.indexOf("equipamentos") >= 0) cmd = 'g';
-
-    else if (recebido.indexOf("ligar") >= 0 && recebido.indexOf("fogo 1") >= 0) cmd = 'j';
-    else if (recebido.indexOf("desligar") >= 0 && recebido.indexOf("fogo 1") >= 0) cmd = 'i';
-
-    else if (recebido.indexOf("ligar") >= 0 && recebido.indexOf("fogo 2") >= 0) cmd = 'l';
-    else if (recebido.indexOf("desligar") >= 0 && recebido.indexOf("fogo 2") >= 0) cmd = 'k';
-
-    else if (recebido.indexOf("ligar") >= 0 && recebido.indexOf("fogo 3") >= 0) cmd = 'n';
-    else if (recebido.indexOf("desligar") >= 0 && recebido.indexOf("fogo 3") >= 0) cmd = 'm';
-
-    else if (recebido.indexOf("ligar") >= 0 && recebido.indexOf("fogo 4") >= 0) cmd = 'p';
-    else if (recebido.indexOf("desligar") >= 0 && recebido.indexOf("fogo 4") >= 0) cmd = 'o';
-
     // ===== BOTÕES =====
     if (cmd == 0 && recebido.length() == 1) {
       cmd = recebido.charAt(0);
@@ -135,46 +121,51 @@ void loop() {
     // ===== EXECUÇÃO =====
     switch (cmd) {
 
-        case 'a': case 'r': digitalWrite(RELE_LAMPADA, LOW);  break;
-        case 'b': case 'q': digitalWrite(RELE_LAMPADA, HIGH); break;
+        //lampada
+        case 'a': case 'p': digitalWrite(RELE_LAMPADA, LOW);  break; // ok
+        case 'b': case 'o': digitalWrite(RELE_LAMPADA, HIGH); break; // ok
+        //ventilador
+        case 'c': case 'r': digitalWrite(RELE_FAN, LOW);  break; // ok
+        case 'd': case 'q': digitalWrite(RELE_FAN, HIGH); break; // ok
+        //micro-ondas
+        case '3': case 't': motorLigado = true;  break; //ok
+        case '2': case 's': motorLigado = false; break; //ok
 
-        case 'c': case 't': digitalWrite(RELE_FAN, LOW);  break;
-        case 'd': case 's': digitalWrite(RELE_FAN, HIGH); break;
+      case 'e': // desligar os equipamentos
+        digitalWrite(RELE_LAMPADA, HIGH);   // relé
+        digitalWrite(RELE_FAN, HIGH);       // relé
+        motorLigado = false;
+        digitalWrite(RELE_FOGO1, LOW);      // LED
+        digitalWrite(RELE_FOGO2, LOW);
+        digitalWrite(RELE_FOGO3, LOW);
+        digitalWrite(RELE_FOGO4, LOW);
+        break;
 
-        case 'f': case 'v': motorLigado = true;  break;
-        case 'e': case 'u': motorLigado = false; break;
+      case 'f': // ligar os equipamentos
+        digitalWrite(RELE_LAMPADA, LOW);    // relé
+        digitalWrite(RELE_FAN, LOW);        // relé
+        motorLigado = true;
+        digitalWrite(RELE_FOGO1, HIGH);     // LED
+        digitalWrite(RELE_FOGO2, HIGH);
+        digitalWrite(RELE_FOGO3, HIGH);
+        digitalWrite(RELE_FOGO4, HIGH);
+        break;
 
-        case 'h':
-          digitalWrite(RELE_LAMPADA, LOW);
-          digitalWrite(RELE_FAN, LOW);
-          motorLigado = true;
-          digitalWrite(RELE_FOGO1, LOW);
-          digitalWrite(RELE_FOGO2, LOW);
-          digitalWrite(RELE_FOGO3, LOW);
-          digitalWrite(RELE_FOGO4, LOW);
-          break;
+        // FOGO 1
+        case 'h': case 'v': digitalWrite(RELE_FOGO1, HIGH);  break;   
+        case 'g': case 'u': digitalWrite(RELE_FOGO1, LOW); break;  
 
-        case 'g':
-          digitalWrite(RELE_LAMPADA, HIGH);
-          digitalWrite(RELE_FAN, HIGH);
-          motorLigado = false;
-          digitalWrite(RELE_FOGO1, HIGH);
-          digitalWrite(RELE_FOGO2, HIGH);
-          digitalWrite(RELE_FOGO3, HIGH);
-          digitalWrite(RELE_FOGO4, HIGH);
-          break;
+        // FOGO 2
+        case 'j': case 'x': digitalWrite(RELE_FOGO2, HIGH);  break;
+        case 'i': case 'w': digitalWrite(RELE_FOGO2, LOW); break;
 
-        case 'j': case 'x': digitalWrite(RELE_FOGO1, LOW);  break;
-        case 'i': case 'w': digitalWrite(RELE_FOGO1, HIGH); break;
+        // FOGO 3
+        case 'l': case 'z': digitalWrite(RELE_FOGO3, HIGH);  break;
+        case 'k': case 'y': digitalWrite(RELE_FOGO3, LOW); break;
 
-        case 'l': case 'z': digitalWrite(RELE_FOGO2, LOW);  break;
-        case 'k': case 'y': digitalWrite(RELE_FOGO2, HIGH); break;
-
-        case 'n': case '1': digitalWrite(RELE_FOGO3, LOW);  break;
-        case 'm': case '0': digitalWrite(RELE_FOGO3, HIGH); break;
-
-        case 'p': case '3': digitalWrite(RELE_FOGO4, LOW);  break;
-        case 'o': case '2': digitalWrite(RELE_FOGO4, HIGH); break;
+        // FOGO 4
+        case 'n': case '1': digitalWrite(RELE_FOGO4, HIGH);  break;
+        case 'm': case '0': digitalWrite(RELE_FOGO4, LOW); break;
       }
     }
   }
